@@ -1,6 +1,9 @@
 """
 EPUB Translator - Main application module
 Translates EPUB documents using OpenAI-compatible LLM APIs
+
+This module provides both a GUI and programmatic API for translating
+EPUB e-books while preserving their structure, images, and formatting.
 """
 import os
 import re
