@@ -4,14 +4,21 @@ Translates EPUB documents using OpenAI-compatible LLM APIs
 """
 import os
 import re
-import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
 from typing import List, Tuple, Optional
 import ebooklib
 from ebooklib import epub
 from bs4 import BeautifulSoup
 import openai
 from openai import OpenAI
+
+# Try to import tkinter for GUI (optional)
+try:
+    import tkinter as tk
+    from tkinter import filedialog, messagebox, ttk
+    HAS_TKINTER = True
+except ImportError:
+    HAS_TKINTER = False
+    print("Warning: tkinter not available. GUI will not be available.")
 
 
 class EPUBTranslator:
@@ -220,6 +227,37 @@ class EPUBTranslator:
         }
         return font_map.get(lang_code, font_map['default'])
     
+    def _fix_toc_links(self, book: epub.EpubBook):
+        """
+        Fix TOC links to have UIDs - required for ebooklib to write properly
+        
+        Args:
+            book: EPUB book object
+        """
+        if not book.toc:
+            return
+        
+        def fix_link(item, index=0):
+            """Recursively fix links in TOC"""
+            if isinstance(item, epub.Link):
+                # If uid is None, generate one
+                if item.uid is None:
+                    item.uid = f"toc_link_{index}"
+                return index + 1
+            elif isinstance(item, tuple) or isinstance(item, list):
+                for sub_item in item:
+                    index = fix_link(sub_item, index)
+                return index
+            else:
+                # It's likely an EpubHtml or similar item that already has a uid
+                return index
+        
+        # Process TOC items
+        if isinstance(book.toc, (list, tuple)):
+            index = 0
+            for item in book.toc:
+                index = fix_link(item, index)
+    
     def translate_epub(self, input_path: str, output_path: str, 
                        progress_callback=None, total_callback=None) -> bool:
         """
@@ -249,6 +287,9 @@ class EPUBTranslator:
             # Adjust metadata for target language
             self.adjust_epub_metadata(book, self.target_lang)
             
+            # Fix TOC links to have UIDs (required for writing)
+            self._fix_toc_links(book)
+            
             # Write translated EPUB
             epub.write_epub(output_path, book)
             
@@ -256,14 +297,19 @@ class EPUBTranslator:
             
         except Exception as e:
             print(f"Translation failed: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
 
 class TranslatorGUI:
     """GUI for EPUB Translator"""
     
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root):
         """Initialize GUI"""
+        if not HAS_TKINTER:
+            raise ImportError("tkinter is required for GUI functionality")
+        
         self.root = root
         self.root.title("EPUB Translator")
         self.root.geometry("600x500")
@@ -456,10 +502,18 @@ class TranslatorGUI:
 
 def main():
     """Main entry point"""
+    if not HAS_TKINTER:
+        print("Error: tkinter is not available. Cannot start GUI.")
+        print("Please install tkinter or use the programmatic API.")
+        print("See example_usage.py for non-GUI usage.")
+        return 1
+    
     root = tk.Tk()
     app = TranslatorGUI(root)
     root.mainloop()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    sys.exit(main())

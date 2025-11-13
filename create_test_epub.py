@@ -52,9 +52,8 @@ def create_test_epub(output_path: str):
     book.add_item(c1)
     book.add_item(c2)
     
-    # Define Table of Contents
-    book.toc = (epub.Link('chap_01.xhtml', 'Chapter 1', 'chap_01'),
-                epub.Link('chap_02.xhtml', 'Chapter 2', 'chap_02'))
+    # Define Table of Contents - use actual chapter items instead of Links
+    book.toc = (c1, c2)
     
     # Add navigation files
     book.add_item(epub.EpubNcx())
