@@ -13,7 +13,7 @@ except ImportError:
     HAS_TKINTER = False
     print("Warning: tkinter not available. GUI will not be available.")
 
-from .translator import EPUBTranslator
+from .translator import EPUBTranslator, fetch_available_models
 from .config import (
     DEFAULT_API_BASE,
     SUPPORTED_MODELS,
@@ -69,9 +69,13 @@ class TranslatorGUI:
         # Model selection
         ttk.Label(main_frame, text="Model:").grid(row=current_row, column=0, sticky=tk.W, pady=5)
         self.model_var = tk.StringVar(value=SUPPORTED_MODELS[0])
-        model_combo = ttk.Combobox(main_frame, textvariable=self.model_var, width=47)
-        model_combo['values'] = SUPPORTED_MODELS
-        model_combo.grid(row=current_row, column=1, columnspan=2, sticky=(tk.W, tk.E), pady=5)
+        self.model_combo = ttk.Combobox(main_frame, textvariable=self.model_var, width=37)
+        self.model_combo['values'] = SUPPORTED_MODELS
+        self.model_combo.grid(row=current_row, column=1, sticky=(tk.W, tk.E), pady=5)
+        
+        # Add button to fetch models from API
+        self.fetch_models_button = ttk.Button(main_frame, text="Fetch Models", command=self.fetch_models)
+        self.fetch_models_button.grid(row=current_row, column=2, sticky=tk.E, pady=5, padx=(5, 0))
         current_row += 1
         
         # Custom prompt section
@@ -192,6 +196,67 @@ class TranslatorGUI:
         if filename:
             self.output_file = filename
             self.output_label.config(text=os.path.basename(filename), foreground="black")
+    
+    def fetch_models(self):
+        """Fetch available models from the API"""
+        # Validate API key is entered
+        api_key = self.api_key_entry.get()
+        if not api_key:
+            messagebox.showwarning("Warning", "Please enter your API key first")
+            return
+        
+        # Get API base URL
+        api_base = self.api_base_entry.get() or DEFAULT_API_BASE
+        
+        # Disable button and show loading state
+        self.fetch_models_button.config(state='disabled', text="Fetching...")
+        self.root.update_idletasks()
+        
+        # Fetch models in a separate thread to keep GUI responsive
+        import threading
+        
+        def fetch_and_update():
+            try:
+                models = fetch_available_models(api_key, api_base)
+                
+                # Update UI from main thread
+                self.root.after(0, self.update_models_list, models)
+            except Exception as e:
+                self.root.after(0, self.fetch_models_error, str(e))
+        
+        thread = threading.Thread(target=fetch_and_update)
+        thread.daemon = True
+        thread.start()
+    
+    def update_models_list(self, models):
+        """Update the models combobox with fetched models"""
+        # Re-enable button
+        self.fetch_models_button.config(state='normal', text="Fetch Models")
+        
+        if models:
+            # Update combobox with fetched models
+            self.model_combo['values'] = models
+            
+            # Try to keep current selection if it exists in new list
+            current_model = self.model_var.get()
+            if current_model not in models and models:
+                # Set to first model if current selection is not in the list
+                self.model_var.set(models[0])
+            
+            messagebox.showinfo("Success", f"Successfully fetched {len(models)} models from API")
+        else:
+            # Fall back to hardcoded models
+            self.model_combo['values'] = SUPPORTED_MODELS
+            messagebox.showwarning(
+                "Warning", 
+                "Failed to fetch models from API. Using default model list.\n"
+                "Please check your API key and base URL."
+            )
+    
+    def fetch_models_error(self, error_msg):
+        """Handle errors when fetching models"""
+        self.fetch_models_button.config(state='normal', text="Fetch Models")
+        messagebox.showerror("Error", f"Failed to fetch models: {error_msg}")
     
     def start_translation(self):
         """Start the translation process"""
