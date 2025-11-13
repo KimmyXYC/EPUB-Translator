@@ -205,3 +205,8 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Test files
+test_input.epub
+test_output.epub
+*_translated.epub
