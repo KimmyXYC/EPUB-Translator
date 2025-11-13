@@ -3,7 +3,7 @@ EPUB Translator Package
 A tool for translating EPUB e-books using LLM APIs
 """
 
-from .translator import EPUBTranslator
+from .translator import EPUBTranslator, fetch_available_models
 from .gui import TranslatorGUI, start_gui, HAS_TKINTER
 from .config import (
     DEFAULT_API_BASE,
@@ -18,6 +18,7 @@ __version__ = "1.0.0"
 
 __all__ = [
     'EPUBTranslator',
+    'fetch_available_models',
     'TranslatorGUI',
     'start_gui',
     'HAS_TKINTER',

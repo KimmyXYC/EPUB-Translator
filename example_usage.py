@@ -3,7 +3,7 @@ Example usage of EPUB Translator without GUI
 This demonstrates the core functionality including model selection and custom prompts
 """
 import os
-from src.epub_translator import EPUBTranslator, SUPPORTED_MODELS, DEFAULT_SYSTEM_PROMPT
+from src.epub_translator import EPUBTranslator, SUPPORTED_MODELS, DEFAULT_SYSTEM_PROMPT, fetch_available_models
 
 def main():
     """Example of using the translator programmatically"""
@@ -16,9 +16,31 @@ def main():
         print("   Example: export OPENAI_API_KEY='sk-...'")
         return
     
-    # Example 1: Basic usage with default settings
+    # Example 1: Fetch available models from API
     print("=" * 60)
-    print("Example 1: Basic Translation with Default Settings")
+    print("Example 1: Fetch Available Models from API")
+    print("=" * 60)
+    
+    print("Fetching available models from API...")
+    available_models = fetch_available_models(
+        api_key=api_key,
+        api_base="https://api.openai.com/v1"
+    )
+    
+    if available_models:
+        print(f"✅ Found {len(available_models)} models from API:")
+        for model in available_models[:10]:  # Show first 10
+            print(f"   - {model}")
+        if len(available_models) > 10:
+            print(f"   ... and {len(available_models) - 10} more")
+    else:
+        print("⚠️  Failed to fetch models from API, using default list")
+        print(f"Default models: {', '.join(SUPPORTED_MODELS)}")
+    print()
+    
+    # Example 2: Basic usage with default settings
+    print("=" * 60)
+    print("Example 2: Basic Translation with Default Settings")
     print("=" * 60)
     
     translator = EPUBTranslator(
@@ -34,12 +56,12 @@ def main():
     print(f"From: {translator.source_lang} → To: {translator.target_lang}")
     print()
     
-    # Example 2: Using a specific model
+    # Example 3: Using a specific model
     print("=" * 60)
-    print("Example 2: Translation with Specific Model")
+    print("Example 3: Translation with Specific Model")
     print("=" * 60)
     
-    print(f"Available models: {', '.join(SUPPORTED_MODELS)}")
+    print(f"Hardcoded default models: {', '.join(SUPPORTED_MODELS)}")
     
     translator_with_model = EPUBTranslator(
         api_key=api_key,
@@ -54,9 +76,9 @@ def main():
     print(f"From: {translator_with_model.source_lang} → To: {translator_with_model.target_lang}")
     print()
     
-    # Example 3: Using a custom prompt
+    # Example 4: Using a custom prompt
     print("=" * 60)
-    print("Example 3: Translation with Custom Prompt")
+    print("Example 4: Translation with Custom Prompt")
     print("=" * 60)
     
     custom_prompt = """You are an expert literary translator specializing in {target_language}.

@@ -21,6 +21,34 @@ from .config import (
 from .prompts import get_system_prompt
 
 
+def fetch_available_models(api_key: str, api_base: str = DEFAULT_API_BASE) -> List[str]:
+    """
+    Fetch available models from the API
+    
+    Args:
+        api_key: API key for authentication
+        api_base: API base URL (default: OpenAI)
+        
+    Returns:
+        List of available model IDs, or empty list if fetch fails
+    """
+    try:
+        client = OpenAI(api_key=api_key, base_url=api_base)
+        models_response = client.models.list()
+        
+        # Extract model IDs from response
+        model_ids = [model.id for model in models_response.data]
+        
+        # Filter to keep only chat/completion models (optional - can be removed if all models should be shown)
+        # Common patterns: gpt-*, claude-*, llama-*, mistral-*, etc.
+        # For now, we'll return all models as different providers may have different naming schemes
+        
+        return sorted(model_ids)
+    except Exception as e:
+        print(f"Failed to fetch models from API: {e}")
+        return []
+
+
 class EPUBTranslator:
     """Main class for EPUB translation operations"""
     
