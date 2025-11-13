@@ -9,6 +9,7 @@ A Python-based EPUB e-book translator that uses LLM (Large Language Models) for 
 - 📚 解析和翻译 EPUB 电子书 (Parse and translate EPUB e-books)
 - 🤖 使用 OpenAI 兼容的 API 进行翻译 (Use OpenAI-compatible APIs for translation)
 - 🔧 支持多种模型选择 (Support multiple model selection: GPT-3.5, GPT-4, GPT-4o, etc.)
+- 🔄 从 API 动态获取可用模型列表 (Dynamically fetch available models from API)
 - ✍️ 自定义翻译提示词 (Customize translation prompts for better results)
 - 🎨 保留原始格式和图片 (Preserve original formatting and images)
 - 🌍 支持多种语言互译 (Support multiple language translations)
@@ -49,7 +50,8 @@ python epub_translator.py
 1. **配置 API**:
    - 输入你的 OpenAI API 密钥或兼容 API 的密钥
    - (可选) 修改 API Base URL 如果使用其他兼容的服务
-   - 选择要使用的模型 (Model): 如 gpt-3.5-turbo, gpt-4, gpt-4o-mini 等
+   - 点击 "Fetch Models" 按钮从 API 自动获取可用模型列表
+   - 或从下拉菜单选择默认模型: 如 gpt-3.5-turbo, gpt-4, gpt-4o-mini 等
 
 2. **自定义提示词 (可选)**:
    - 在"Translation Prompt"区域可以自定义翻译提示词
@@ -135,11 +137,19 @@ This tool uses OpenAI's API format and is compatible with other API services usi
 除了 GUI，你也可以在代码中使用 EPUB Translator：
 
 ```python
-from src.epub_translator import EPUBTranslator
+from src.epub_translator import EPUBTranslator, fetch_available_models
+
+# 获取可用模型列表 (Fetch available models from API)
+api_key = "your-api-key"
+available_models = fetch_available_models(
+    api_key=api_key,
+    api_base="https://api.openai.com/v1"
+)
+print(f"Available models: {available_models}")
 
 # 基础使用 (Basic usage)
 translator = EPUBTranslator(
-    api_key="your-api-key",
+    api_key=api_key,
     api_base="https://api.openai.com/v1"
 )
 translator.source_lang = "en"
@@ -148,7 +158,7 @@ translator.translate_epub("input.epub", "output.epub")
 
 # 使用特定模型 (Using specific model)
 translator = EPUBTranslator(
-    api_key="your-api-key",
+    api_key=api_key,
     model="gpt-4o-mini"  # 选择模型
 )
 
@@ -158,7 +168,7 @@ Translate to {target_language} with attention to style and tone.
 Only return the translation."""
 
 translator = EPUBTranslator(
-    api_key="your-api-key",
+    api_key=api_key,
     model="gpt-4",
     custom_prompt=custom_prompt
 )
