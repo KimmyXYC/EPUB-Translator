@@ -4,15 +4,18 @@ Tests the core functionality without requiring a GUI or API
 """
 import os
 import sys
-from epub_translator import EPUBTranslator
+from src.epub_translator import EPUBTranslator, SUPPORTED_MODELS, DEFAULT_SYSTEM_PROMPT
 from ebooklib import epub
 from bs4 import BeautifulSoup
 
 class MockTranslator(EPUBTranslator):
     """Mock translator for testing without API calls"""
     
-    def __init__(self):
+    def __init__(self, model=None, custom_prompt=None):
         """Initialize without API key"""
+        # Don't call parent __init__ since we don't have an API key
+        self.model = model or "gpt-3.5-turbo"
+        self.custom_prompt = custom_prompt
         self.source_lang = "en"
         self.target_lang = "zh"
         self.translation_count = 0
@@ -175,6 +178,67 @@ def test_metadata_adjustment():
     
     return True
 
+def test_model_selection():
+    """Test model selection functionality"""
+    print("\n🧪 Testing model selection...")
+    
+    # Test default model
+    translator1 = MockTranslator()
+    print(f"   ✅ Default model: {translator1.model}")
+    
+    # Test custom model
+    translator2 = MockTranslator(model="gpt-4o-mini")
+    print(f"   ✅ Custom model: {translator2.model}")
+    
+    # Test all supported models
+    print(f"   ℹ️  Supported models: {', '.join(SUPPORTED_MODELS)}")
+    
+    return translator1.model == "gpt-3.5-turbo" and translator2.model == "gpt-4o-mini"
+
+def test_custom_prompt():
+    """Test custom prompt functionality"""
+    print("\n🧪 Testing custom prompt...")
+    
+    # Test default prompt
+    translator1 = MockTranslator()
+    print(f"   ✅ Default prompt (None): {translator1.custom_prompt is None}")
+    
+    # Test custom prompt
+    custom = "You are a literary translator. Translate to {target_language}."
+    translator2 = MockTranslator(custom_prompt=custom)
+    print(f"   ✅ Custom prompt set: {translator2.custom_prompt[:50]}...")
+    
+    # Test prompt module
+    from src.epub_translator.prompts import get_system_prompt
+    
+    default_result = get_system_prompt("Chinese")
+    custom_result = get_system_prompt("Chinese", custom)
+    
+    print(f"   ✅ Default prompt result: {default_result[:60]}...")
+    print(f"   ✅ Custom prompt result: {custom_result[:60]}...")
+    
+    return translator2.custom_prompt == custom
+
+def test_config_module():
+    """Test configuration module"""
+    print("\n🧪 Testing configuration module...")
+    
+    from src.epub_translator.config import (
+        DEFAULT_MODEL,
+        SUPPORTED_MODELS,
+        LANGUAGE_NAMES,
+        SOURCE_LANGUAGES,
+        TARGET_LANGUAGES,
+    )
+    
+    print(f"   ✅ Default model: {DEFAULT_MODEL}")
+    print(f"   ✅ Supported models count: {len(SUPPORTED_MODELS)}")
+    print(f"   ✅ Language names count: {len(LANGUAGE_NAMES)}")
+    print(f"   ✅ Source languages: {len(SOURCE_LANGUAGES)}")
+    print(f"   ✅ Target languages: {len(TARGET_LANGUAGES)}")
+    
+    return len(SUPPORTED_MODELS) > 0 and DEFAULT_MODEL in SUPPORTED_MODELS
+
 def test_gui_imports():
     """Test that GUI can be imported (even if not displayed)"""
     print("\n🧪 Testing GUI imports...")
@@ -211,6 +275,9 @@ def main():
         ("Text Segmentation", test_text_segmentation),
         ("Translation", test_translation),
         ("Metadata Adjustment", test_metadata_adjustment),
+        ("Model Selection", test_model_selection),
+        ("Custom Prompt", test_custom_prompt),
+        ("Config Module", test_config_module),
         ("Full Translation", test_full_translation),
         ("GUI Imports", test_gui_imports),
     ]

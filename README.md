@@ -8,10 +8,13 @@ A Python-based EPUB e-book translator that uses LLM (Large Language Models) for 
 
 - 📚 解析和翻译 EPUB 电子书 (Parse and translate EPUB e-books)
 - 🤖 使用 OpenAI 兼容的 API 进行翻译 (Use OpenAI-compatible APIs for translation)
+- 🔧 支持多种模型选择 (Support multiple model selection: GPT-3.5, GPT-4, GPT-4o, etc.)
+- ✍️ 自定义翻译提示词 (Customize translation prompts for better results)
 - 🎨 保留原始格式和图片 (Preserve original formatting and images)
 - 🌍 支持多种语言互译 (Support multiple language translations)
 - 📝 根据目标语言自动调整文本方向和字体 (Automatically adjust text direction and fonts for target language)
 - 💻 友好的图形用户界面 (User-friendly GUI)
+- 🏗️ 模块化代码结构，易于维护和扩展 (Modular code structure for easy maintenance and extension)
 
 ## 安装 (Installation)
 
@@ -46,16 +49,22 @@ python epub_translator.py
 1. **配置 API**:
    - 输入你的 OpenAI API 密钥或兼容 API 的密钥
    - (可选) 修改 API Base URL 如果使用其他兼容的服务
+   - 选择要使用的模型 (Model): 如 gpt-3.5-turbo, gpt-4, gpt-4o-mini 等
 
-2. **选择语言**:
+2. **自定义提示词 (可选)**:
+   - 在"Translation Prompt"区域可以自定义翻译提示词
+   - 使用 `{target_language}` 作为目标语言的占位符
+   - 默认提示词已针对一般翻译优化
+
+3. **选择语言**:
    - 源语言: 选择原文语言 (auto 为自动检测)
    - 目标语言: 选择要翻译成的语言
 
-3. **选择文件**:
+4. **选择文件**:
    - 点击 "Browse..." 选择输入的 EPUB 文件
    - 选择输出文件的保存位置
 
-4. **开始翻译**:
+5. **开始翻译**:
    - 点击 "Translate" 按钮开始翻译
    - 进度条将显示翻译进度
    - 翻译完成后会显示成功消息
@@ -121,14 +130,60 @@ This tool uses OpenAI's API format and is compatible with other API services usi
 - **OpenAI**: LLM API 客户端 (LLM API client)
 - **lxml**: XML 处理 (XML processing)
 
+## 编程使用 (Programmatic Usage)
+
+除了 GUI，你也可以在代码中使用 EPUB Translator：
+
+```python
+from src.epub_translator import EPUBTranslator
+
+# 基础使用 (Basic usage)
+translator = EPUBTranslator(
+    api_key="your-api-key",
+    api_base="https://api.openai.com/v1"
+)
+translator.source_lang = "en"
+translator.target_lang = "zh"
+translator.translate_epub("input.epub", "output.epub")
+
+# 使用特定模型 (Using specific model)
+translator = EPUBTranslator(
+    api_key="your-api-key",
+    model="gpt-4o-mini"  # 选择模型
+)
+
+# 使用自定义提示词 (Using custom prompt)
+custom_prompt = """You are an expert literary translator.
+Translate to {target_language} with attention to style and tone.
+Only return the translation."""
+
+translator = EPUBTranslator(
+    api_key="your-api-key",
+    model="gpt-4",
+    custom_prompt=custom_prompt
+)
+```
+
+更多示例请参考 `example_usage.py` 文件。
+
+See `example_usage.py` for more examples.
+
 ## 项目结构 (Project Structure)
 
 ```
 EPUB-Translator/
-├── epub_translator.py    # 主程序文件 (Main application file)
-├── requirements.txt      # 依赖列表 (Dependencies list)
-├── README.md            # 项目说明 (Project documentation)
-└── LICENSE              # 许可证 (License)
+├── src/epub_translator/      # 主包 (Main package)
+│   ├── __init__.py           # 包初始化 (Package initialization)
+│   ├── translator.py         # 核心翻译逻辑 (Core translation logic)
+│   ├── gui.py                # GUI 界面 (GUI interface)
+│   ├── config.py             # 配置和常量 (Configuration and constants)
+│   └── prompts.py            # 提示词模板 (Prompt templates)
+├── epub_translator.py        # 主入口文件 (Main entry point - backwards compatibility)
+├── example_usage.py          # 使用示例 (Usage examples)
+├── test_translator.py        # 测试文件 (Test file)
+├── requirements.txt          # 依赖列表 (Dependencies list)
+├── README.md                 # 项目说明 (Project documentation)
+└── LICENSE                   # 许可证 (License)
 ```
 
 ## 注意事项 (Notes)

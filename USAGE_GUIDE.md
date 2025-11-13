@@ -57,14 +57,48 @@ The main window will appear with several sections.
 **Option A: Using OpenAI**
 - API Key: Enter your OpenAI API key (get from https://platform.openai.com/api-keys)
 - API Base URL: Leave as default `https://api.openai.com/v1`
+- Model: Choose from available models (e.g., gpt-3.5-turbo, gpt-4, gpt-4o-mini)
 
 **Option B: Using Azure OpenAI**
 - API Key: Enter your Azure OpenAI key
 - API Base URL: Change to your Azure endpoint, e.g., `https://YOUR-RESOURCE.openai.azure.com/`
+- Model: Choose the model deployment name
 
 **Option C: Using Local/Custom API**
 - API Key: Your local API key (if required)
 - API Base URL: Your local endpoint, e.g., `http://localhost:8000/v1`
+- Model: Choose the model supported by your local API
+
+#### 2.5. Customize Translation Prompt (Optional)
+
+The "Translation Prompt" section allows you to customize how the AI translates:
+
+**Default Prompt:**
+```
+You are a professional translator. Translate the following text to {target_language}. 
+Only return the translated text without any additional explanation or notes.
+```
+
+**Custom Prompt Examples:**
+
+For literary translation:
+```
+You are an expert literary translator specializing in {target_language}.
+Translate the following text with careful attention to:
+1. Preserving the original tone and style
+2. Using natural, fluent language
+3. Maintaining cultural context where appropriate
+Only return the translated text without explanations.
+```
+
+For technical translation:
+```
+You are a technical translator for {target_language}.
+Translate accurately while preserving technical terms.
+Maintain clarity and precision. Return only the translation.
+```
+
+**Note:** Use `{target_language}` as a placeholder - it will be automatically replaced with the actual target language.
 
 #### 3. Select Languages
 
@@ -104,9 +138,9 @@ The main window will appear with several sections.
 ### Basic Example
 
 ```python
-from epub_translator import EPUBTranslator
+from src.epub_translator import EPUBTranslator
 
-# Initialize translator
+# Initialize translator with default model
 translator = EPUBTranslator(
     api_key="your-api-key-here",
     api_base="https://api.openai.com/v1"
@@ -128,10 +162,55 @@ else:
     print("Translation failed!")
 ```
 
+### With Model Selection
+
+```python
+from src.epub_translator import EPUBTranslator, SUPPORTED_MODELS
+
+# Check available models
+print(f"Available models: {SUPPORTED_MODELS}")
+
+# Use GPT-4 for better quality
+translator = EPUBTranslator(
+    api_key="your-api-key",
+    model="gpt-4"
+)
+translator.target_lang = "zh"
+translator.translate_epub("input.epub", "output.epub")
+
+# Use GPT-4o-mini for cost efficiency
+translator = EPUBTranslator(
+    api_key="your-api-key",
+    model="gpt-4o-mini"
+)
+```
+
+### With Custom Translation Prompt
+
+```python
+from src.epub_translator import EPUBTranslator
+
+# Literary translation with style preservation
+custom_prompt = """You are an expert literary translator specializing in {target_language}.
+Translate the following text with careful attention to:
+1. Preserving the original tone and style
+2. Using natural, fluent language
+3. Maintaining cultural context where appropriate
+Only return the translated text without explanations."""
+
+translator = EPUBTranslator(
+    api_key="your-api-key",
+    model="gpt-4",
+    custom_prompt=custom_prompt
+)
+translator.target_lang = "zh"
+translator.translate_epub("novel.epub", "novel_zh.epub")
+```
+
 ### With Progress Tracking
 
 ```python
-from epub_translator import EPUBTranslator
+from src.epub_translator import EPUBTranslator
 
 def progress_callback():
     """Called after each text segment is translated"""
@@ -141,7 +220,10 @@ def total_callback(total):
     """Called once with total number of documents"""
     print(f"Translating {total} documents...")
 
-translator = EPUBTranslator(api_key="your-key")
+translator = EPUBTranslator(
+    api_key="your-key",
+    model="gpt-3.5-turbo"
+)
 translator.target_lang = "zh"
 
 success = translator.translate_epub(
@@ -156,7 +238,7 @@ success = translator.translate_epub(
 
 ```python
 import os
-from epub_translator import EPUBTranslator
+from src.epub_translator import EPUBTranslator
 
 # Read API key from environment
 api_key = os.environ.get('OPENAI_API_KEY')
@@ -164,11 +246,37 @@ api_key = os.environ.get('OPENAI_API_KEY')
 if not api_key:
     raise ValueError("Please set OPENAI_API_KEY environment variable")
 
-translator = EPUBTranslator(api_key=api_key)
+translator = EPUBTranslator(
+    api_key=api_key,
+    model="gpt-3.5-turbo"
+)
 # ... rest of your code
 ```
 
 ## Advanced Configuration
+
+### Model Selection Guide
+
+**GPT-3.5-turbo** (Default)
+- Fast and cost-effective
+- Good for general translation
+- Best for standard content
+
+**GPT-4**
+- Higher quality translations
+- Better context understanding
+- Recommended for literary works
+- More expensive
+
+**GPT-4-turbo**
+- Faster than GPT-4
+- Similar quality to GPT-4
+- Good balance of speed and quality
+
+**GPT-4o / GPT-4o-mini**
+- Latest models with improved efficiency
+- Good quality-to-cost ratio
+- Recommended for most use cases
 
 ### Custom API Endpoints
 
@@ -176,13 +284,22 @@ translator = EPUBTranslator(api_key=api_key)
 # Using LocalAI
 translator = EPUBTranslator(
     api_key="not-needed",  # LocalAI might not need a key
-    api_base="http://localhost:8080/v1"
+    api_base="http://localhost:8080/v1",
+    model="local-model-name"
 )
 
 # Using Azure OpenAI
 translator = EPUBTranslator(
     api_key="your-azure-key",
-    api_base="https://YOUR-RESOURCE.openai.azure.com/"
+    api_base="https://YOUR-RESOURCE.openai.azure.com/",
+    model="your-deployment-name"
+)
+
+# Using other OpenAI-compatible APIs
+translator = EPUBTranslator(
+    api_key="your-key",
+    api_base="https://api.your-provider.com/v1",
+    model="provider-model-name"
 )
 ```
 
@@ -317,12 +434,62 @@ If you encounter issues:
    - System information (OS, Python version)
    - Sample EPUB file (if possible)
 
+## Code Structure (For Developers)
+
+The project now uses a modular structure for better maintainability:
+
+```
+src/epub_translator/
+├── __init__.py       # Package exports
+├── translator.py     # Core translation logic (EPUBTranslator class)
+├── gui.py           # GUI implementation (TranslatorGUI class)
+├── config.py        # Configuration constants and settings
+└── prompts.py       # Prompt templates and prompt management
+```
+
+### Key Modules:
+
+**translator.py** - Core functionality
+- `EPUBTranslator` class with translation logic
+- EPUB parsing and content extraction
+- API communication with OpenAI-compatible endpoints
+
+**gui.py** - User interface
+- `TranslatorGUI` class for tkinter interface
+- Model selection dropdown
+- Custom prompt text area
+- Progress tracking
+
+**config.py** - Configuration
+- Supported models list
+- Language mappings and fonts
+- Default values and constants
+
+**prompts.py** - Prompt management
+- Default prompt templates
+- Prompt formatting functions
+- Custom prompt support
+
+### Importing in Your Code:
+
+```python
+# Recommended: Import from the package
+from src.epub_translator import EPUBTranslator, SUPPORTED_MODELS
+
+# Backwards compatibility: Old import style still works
+from epub_translator import EPUBTranslator  # Uses wrapper
+```
+
 ## Performance Tips
 
-1. **API Selection**: Faster APIs provide quicker translations
-2. **Segment Size**: Smaller paragraphs translate faster but use more API calls
-3. **Network**: Stable, fast internet connection is crucial
-4. **Rate Limits**: Be aware of your API's rate limits
+1. **Model Selection**: Choose the right model for your needs
+   - GPT-3.5-turbo: Fastest, most cost-effective
+   - GPT-4o-mini: Good balance of speed and quality
+   - GPT-4: Best quality, slower and more expensive
+2. **API Selection**: Faster APIs provide quicker translations
+3. **Segment Size**: Smaller paragraphs translate faster but use more API calls
+4. **Network**: Stable, fast internet connection is crucial
+5. **Rate Limits**: Be aware of your API's rate limits
 
 ## Security Considerations
 
