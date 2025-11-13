@@ -1,9 +1,9 @@
 """
 Example usage of EPUB Translator without GUI
-This demonstrates the core functionality
+This demonstrates the core functionality including model selection and custom prompts
 """
 import os
-from epub_translator import EPUBTranslator
+from src.epub_translator import EPUBTranslator, SUPPORTED_MODELS, DEFAULT_SYSTEM_PROMPT
 
 def main():
     """Example of using the translator programmatically"""
@@ -16,7 +16,11 @@ def main():
         print("   Example: export OPENAI_API_KEY='sk-...'")
         return
     
-    # Initialize translator
+    # Example 1: Basic usage with default settings
+    print("=" * 60)
+    print("Example 1: Basic Translation with Default Settings")
+    print("=" * 60)
+    
     translator = EPUBTranslator(
         api_key=api_key,
         api_base="https://api.openai.com/v1"  # Or use your custom API endpoint
@@ -25,6 +29,64 @@ def main():
     # Set languages
     translator.source_lang = "en"  # Source language
     translator.target_lang = "zh"  # Target language (Chinese)
+    
+    print(f"Model: {translator.model}")
+    print(f"From: {translator.source_lang} → To: {translator.target_lang}")
+    print()
+    
+    # Example 2: Using a specific model
+    print("=" * 60)
+    print("Example 2: Translation with Specific Model")
+    print("=" * 60)
+    
+    print(f"Available models: {', '.join(SUPPORTED_MODELS)}")
+    
+    translator_with_model = EPUBTranslator(
+        api_key=api_key,
+        api_base="https://api.openai.com/v1",
+        model="gpt-4o-mini"  # Use a specific model
+    )
+    
+    translator_with_model.source_lang = "en"
+    translator_with_model.target_lang = "zh"
+    
+    print(f"Model: {translator_with_model.model}")
+    print(f"From: {translator_with_model.source_lang} → To: {translator_with_model.target_lang}")
+    print()
+    
+    # Example 3: Using a custom prompt
+    print("=" * 60)
+    print("Example 3: Translation with Custom Prompt")
+    print("=" * 60)
+    
+    custom_prompt = """You are an expert literary translator specializing in {target_language}.
+Translate the following text to {target_language} with careful attention to:
+1. Preserving the original tone and style
+2. Using natural, fluent language
+3. Maintaining cultural context where appropriate
+Only return the translated text without explanations."""
+    
+    translator_with_prompt = EPUBTranslator(
+        api_key=api_key,
+        api_base="https://api.openai.com/v1",
+        model="gpt-3.5-turbo",
+        custom_prompt=custom_prompt
+    )
+    
+    translator_with_prompt.source_lang = "en"
+    translator_with_prompt.target_lang = "zh"
+    
+    print(f"Model: {translator_with_prompt.model}")
+    print(f"Custom prompt: {custom_prompt[:100]}...")
+    print()
+    
+    # Now select which translator to use for actual translation
+    print("=" * 60)
+    print("Performing Translation")
+    print("=" * 60)
+    
+    # Use the translator with custom prompt for this example
+    active_translator = translator
     
     # Input and output files
     input_file = "test_input.epub"
@@ -38,7 +100,8 @@ def main():
     print(f"📚 Starting translation...")
     print(f"   Input: {input_file}")
     print(f"   Output: {output_file}")
-    print(f"   From: {translator.source_lang} → To: {translator.target_lang}")
+    print(f"   Model: {active_translator.model}")
+    print(f"   From: {active_translator.source_lang} → To: {active_translator.target_lang}")
     print()
     
     # Progress tracking
@@ -56,7 +119,7 @@ def main():
             print(f"⏳ Progress: {progress[0]}/{total_docs[0]} segments ({percent:.1f}%)")
     
     # Perform translation
-    success = translator.translate_epub(
+    success = active_translator.translate_epub(
         input_file,
         output_file,
         progress_callback=update_progress,
