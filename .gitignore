@@ -209,4 +209,5 @@ __marimo__/
 # Test files
 test_input.epub
 test_output.epub
+test_copy.epub
 *_translated.epub
